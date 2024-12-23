@@ -8,8 +8,11 @@ export default function Login() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false); // State to track loading
 
   const handleLogin = async () => {
+    setLoading(true); // Show progress bar
+    setError(null); // Clear any existing errors
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_AUTH_HOST}/login`, {
         method: 'POST',
@@ -22,13 +25,13 @@ export default function Login() {
       }
 
       const data = await res.json();
-      // Save token or session info (example uses localStorage)
       localStorage.setItem('authToken', data.token);
-      // Navigate to dashboard
       router.push('/dashboard');
     } catch (error) {
       console.log(error);
       setError('Invalid username or password');
+    } finally {
+      setLoading(false); // Hide progress bar
     }
   };
 
@@ -52,6 +55,7 @@ export default function Login() {
             onChange={(e) => setUsername(e.target.value)}
             placeholder="Enter your username"
             className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            disabled={loading}
           />
         </div>
         <div className="mb-4">
@@ -65,14 +69,25 @@ export default function Login() {
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Enter your password"
             className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            disabled={loading}
           />
         </div>
         <button
           onClick={handleLogin}
-          className="w-full bg-blue-600 text-white font-medium py-2 rounded-lg hover:bg-blue-700 transition duration-300"
+          className={`w-full font-medium py-2 rounded-lg transition duration-300 ${
+            loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 text-white'
+          }`}
+          disabled={loading}
         >
-          Log In
+          {loading ? 'Logging in...' : 'Log In'}
         </button>
+        {loading && (
+          <div className="mt-4">
+            <div className="w-full bg-gray-200 rounded-full h-2.5">
+              <div className="bg-blue-600 h-2.5 rounded-full animate-pulse" style={{ width: '50%' }}></div>
+            </div>
+          </div>
+        )}
       </div>
       <p className="text-gray-500 text-xs mt-6">
         &copy; {new Date().getFullYear()} KodingKrafters Inc. All rights reserved.

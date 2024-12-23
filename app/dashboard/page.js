@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation';
 export default function Dashboard() {
   const router = useRouter();
 
-  // State to hold the form data
   const [formData, setFormData] = useState({
     gender: '',
     weight: '',
@@ -16,22 +15,17 @@ export default function Dashboard() {
     goal: 'lose weight',
   });
 
-  // State to hold the API response data
   const [apiResponse, setApiResponse] = useState(null);
 
   useEffect(() => {
-    // Check if the user is authenticated
     const authToken = localStorage.getItem('authToken');
     if (!authToken) {
-      // Redirect to login if not authenticated
       router.push('/');
     }
   }, [router]);
 
   const handleLogout = () => {
-    // Clear any client-side authentication data
     localStorage.removeItem('authToken');
-    // Redirect to login page
     router.push('/');
   };
 
@@ -45,10 +39,8 @@ export default function Dashboard() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     const { gender, weight, height, age, activity_level, goal } = formData;
 
-    // Prepare the JSON to send to the API
     const requestBody = {
       gender,
       weight: parseInt(weight),
@@ -68,7 +60,7 @@ export default function Dashboard() {
       });
 
       const data = await res.json();
-      setApiResponse(data); // Update API response
+      setApiResponse(data);
     } catch (error) {
       console.error('Error making API call:', error);
     }
@@ -76,19 +68,19 @@ export default function Dashboard() {
 
   return (
     <div className="dashboard-container">
-      <h1>Welcome to the Dashboard</h1>
+      <header className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Welcome to the Dashboard</h1>
+        <a
+          href="#"
+          className="text-blue-600 font-medium hover:underline"
+          onClick={handleLogout}
+        >
+          Log Out
+        </a>
+      </header>
 
-      {/* Logout Link */}
-      <a
-        href="#"
-        className="logout-link"
-        onClick={handleLogout}
-      >
-        Log Out
-      </a>
-
-      {/* Form to input details */}
       <form onSubmit={handleSubmit} className="form-container">
+        {/* Form Fields */}
         <div className="form-group">
           <label htmlFor="gender" className="form-label">Gender:</label>
           <input
@@ -101,7 +93,6 @@ export default function Dashboard() {
             className="form-input"
           />
         </div>
-
         <div className="form-group">
           <label htmlFor="weight" className="form-label">Weight (kg):</label>
           <input
@@ -114,7 +105,6 @@ export default function Dashboard() {
             className="form-input"
           />
         </div>
-
         <div className="form-group">
           <label htmlFor="height" className="form-label">Height (cm):</label>
           <input
@@ -127,7 +117,6 @@ export default function Dashboard() {
             className="form-input"
           />
         </div>
-
         <div className="form-group">
           <label htmlFor="age" className="form-label">Age:</label>
           <input
@@ -140,7 +129,6 @@ export default function Dashboard() {
             className="form-input"
           />
         </div>
-
         <div className="form-group">
           <label htmlFor="activity_level" className="form-label">Activity Level:</label>
           <select
@@ -157,7 +145,6 @@ export default function Dashboard() {
             <option value="very active">Very active</option>
           </select>
         </div>
-
         <div className="form-group">
           <label htmlFor="goal" className="form-label">Goal:</label>
           <select
@@ -173,14 +160,14 @@ export default function Dashboard() {
             <option value="gain weight">Gain weight</option>
           </select>
         </div>
-
-        <button type="submit">Submit</button>
+        <button type="submit" className="mt-4 bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700">
+          Submit
+        </button>
       </form>
 
-      {/* Displaying the response from the API in form fields */}
       {apiResponse && (
-        <div className="result-container">
-          <h2>Response</h2>
+        <div className="result-container mt-6">
+          <h2 className="text-xl font-bold">Response</h2>
           <div className="form-group">
             <label htmlFor="apiActivityLevel" className="form-label">Activity Level:</label>
             <input
@@ -191,7 +178,6 @@ export default function Dashboard() {
               className="form-input"
             />
           </div>
-
           <div className="form-group">
             <label htmlFor="apiBmr" className="form-label">Basal Metabolic Rate (BMR):</label>
             <input
@@ -202,7 +188,6 @@ export default function Dashboard() {
               className="form-input"
             />
           </div>
-
           <div className="form-group">
             <label htmlFor="apiCaloriesNeeded" className="form-label">Daily Calorie Intake:</label>
             <input
@@ -213,7 +198,6 @@ export default function Dashboard() {
               className="form-input"
             />
           </div>
-
           <div className="form-group">
             <label htmlFor="apiGoal" className="form-label">Goal:</label>
             <input
