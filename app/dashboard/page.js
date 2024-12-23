@@ -15,7 +15,11 @@ export default function Dashboard() {
     goal: 'lose weight',
   });
 
-  const [apiResponse, setApiResponse] = useState(null);
+  const [dietType, setDietType] = useState('high-protein');
+  const [preference, setPreference] = useState('vegetarian');
+  const [recipeLoading, setRecipeLoading] = useState(false);
+  const [recipeResponse, setRecipeResponse] = useState(null);
+  const [showRecipeModal, setShowRecipeModal] = useState(false);
 
   useEffect(() => {
     const authToken = localStorage.getItem('authToken');
@@ -29,19 +33,10 @@ export default function Dashboard() {
     router.push('/');
   };
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prevState) => ({
-      ...prevState,
-      [name]: value,
-    }));
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleGenerateRecipe = async () => {
     const { gender, weight, height, age, activity_level, goal } = formData;
 
-    const requestBody = {
+    const calorieRequestBody = {
       gender,
       weight: parseInt(weight),
       height: parseInt(height),
@@ -51,18 +46,44 @@ export default function Dashboard() {
     };
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_CALORIE_INTAKE_API_HOST}/calculate-calories`, {
+      setRecipeLoading(true);
+
+      // Step 1: Call Calorie Intake API
+      const calorieResponse = await fetch(`${process.env.NEXT_PUBLIC_CALORIE_INTAKE_API_HOST}/calculate-calories`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(requestBody),
+        body: JSON.stringify(calorieRequestBody),
       });
 
-      const data = await res.json();
-      setApiResponse(data);
+      const calorieData = await calorieResponse.json();
+      if (!calorieData || !calorieData.caloriesNeeded) {
+        throw new Error('Calorie API did not return valid data.');
+      }
+
+      // Step 2: Use calories from the response to call Generate Meal Plan API
+      const mealPlanRequestBody = {
+        calories: calorieData.caloriesNeeded,
+        dietType,
+        preference,
+      };
+
+      const mealPlanResponse = await fetch(`${process.env.NEXT_PUBLIC_MEAL_PLAN_API_HOST}/generate-meal-plan`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(mealPlanRequestBody),
+      });
+
+      const mealPlanData = await mealPlanResponse.json();
+      setRecipeResponse(mealPlanData);
+      setShowRecipeModal(true);
     } catch (error) {
-      console.error('Error making API call:', error);
+      console.error('Error generating recipe:', error);
+    } finally {
+      setRecipeLoading(false);
     }
   };
 
@@ -79,8 +100,8 @@ export default function Dashboard() {
         </a>
       </header>
 
-      <form onSubmit={handleSubmit} className="form-container">
-        {/* Form Fields */}
+      {/* Form Fields */}
+      <div className="form-container">
         <div className="form-group">
           <label htmlFor="gender" className="form-label">Gender:</label>
           <input
@@ -88,7 +109,9 @@ export default function Dashboard() {
             id="gender"
             name="gender"
             value={formData.gender}
-            onChange={handleChange}
+            onChange={(e) =>
+              setFormData((prevState) => ({ ...prevState, gender: e.target.value }))
+            }
             required
             className="form-input"
           />
@@ -100,7 +123,9 @@ export default function Dashboard() {
             id="weight"
             name="weight"
             value={formData.weight}
-            onChange={handleChange}
+            onChange={(e) =>
+              setFormData((prevState) => ({ ...prevState, weight: e.target.value }))
+            }
             required
             className="form-input"
           />
@@ -112,7 +137,9 @@ export default function Dashboard() {
             id="height"
             name="height"
             value={formData.height}
-            onChange={handleChange}
+            onChange={(e) =>
+              setFormData((prevState) => ({ ...prevState, height: e.target.value }))
+            }
             required
             className="form-input"
           />
@@ -124,7 +151,9 @@ export default function Dashboard() {
             id="age"
             name="age"
             value={formData.age}
-            onChange={handleChange}
+            onChange={(e) =>
+              setFormData((prevState) => ({ ...prevState, age: e.target.value }))
+            }
             required
             className="form-input"
           />
@@ -135,7 +164,9 @@ export default function Dashboard() {
             id="activity_level"
             name="activity_level"
             value={formData.activity_level}
-            onChange={handleChange}
+            onChange={(e) =>
+              setFormData((prevState) => ({ ...prevState, activity_level: e.target.value }))
+            }
             required
             className="form-input"
           >
@@ -151,7 +182,9 @@ export default function Dashboard() {
             id="goal"
             name="goal"
             value={formData.goal}
-            onChange={handleChange}
+            onChange={(e) =>
+              setFormData((prevState) => ({ ...prevState, goal: e.target.value }))
+            }
             required
             className="form-input"
           >
@@ -160,56 +193,113 @@ export default function Dashboard() {
             <option value="gain weight">Gain weight</option>
           </select>
         </div>
-        <button type="submit" className="mt-4 bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700">
-          Submit
-        </button>
-      </form>
+        <div className="form-group">
+          <label htmlFor="dietType" className="form-label">Diet Type:</label>
+          <select
+            id="dietType"
+            name="dietType"
+            value={dietType}
+            onChange={(e) => setDietType(e.target.value)}
+            required
+            className="form-input"
+          >
+            <option value="high-protein">High Protein</option>
+            <option value="low-carb">Low Carb</option>
+            <option value="keto">Keto</option>
+            <option value="low-fat">Low Fat</option>
+            <option value="paleo">Paleo</option>
+            <option value="atkins">Atkins</option>
+            <option value="gluten-free">Gluten Free</option>
+            <option value="hcg">HCG</option>
+            <option value="zone">Zone</option>
+          </select>
+        </div>
+        <div className="form-group">
+          <label htmlFor="preference" className="form-label">Preference:</label>
+          <select
+            id="preference"
+            name="preference"
+            value={preference}
+            onChange={(e) => setPreference(e.target.value)}
+            required
+            className="form-input"
+          >
+            <option value="vegetarian">Vegetarian</option>
+            <option value="non-vegetarian">Non-Vegetarian</option>
+            <option value="vegan">Vegan</option>
+          </select>
+        </div>
+      </div>
 
-      {apiResponse && (
-        <div className="result-container mt-6">
-          <h2 className="text-xl font-bold">Response</h2>
-          <div className="form-group">
-            <label htmlFor="apiActivityLevel" className="form-label">Activity Level:</label>
-            <input
-              type="text"
-              id="apiActivityLevel"
-              value={apiResponse.activityLevel}
-              disabled
-              className="form-input"
-            />
-          </div>
-          <div className="form-group">
-            <label htmlFor="apiBmr" className="form-label">Basal Metabolic Rate (BMR):</label>
-            <input
-              type="text"
-              id="apiBmr"
-              value={apiResponse.bmr}
-              disabled
-              className="form-input"
-            />
-          </div>
-          <div className="form-group">
-            <label htmlFor="apiCaloriesNeeded" className="form-label">Daily Calorie Intake:</label>
-            <input
-              type="text"
-              id="apiCaloriesNeeded"
-              value={apiResponse.caloriesNeeded}
-              disabled
-              className="form-input"
-            />
-          </div>
-          <div className="form-group">
-            <label htmlFor="apiGoal" className="form-label">Goal:</label>
-            <input
-              type="text"
-              id="apiGoal"
-              value={apiResponse.goal}
-              disabled
-              className="form-input"
-            />
+      {/* Generate Recipe Button */}
+      <button
+        onClick={handleGenerateRecipe}
+        className={`mt-4 w-full bg-green-600 text-white py-2 px-4 rounded hover:bg-green-700 transition ${
+          recipeLoading ? 'opacity-50 cursor-not-allowed' : ''
+        }`}
+        disabled={recipeLoading}
+      >
+        {recipeLoading ? 'Generating Recipe...' : 'Generate Recipe'}
+      </button>
+
+      {/* Recipe Modal */}
+      {showRecipeModal && recipeResponse && recipeResponse.recipes && (
+        <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex justify-center items-center">
+          <div className="bg-white rounded-lg shadow-lg p-6 max-w-md w-full">
+            <h2 className="text-lg font-bold mb-4">Generated Meal Plan</h2>
+
+            {/* Scrollable Content Section */}
+            <div className="max-h-[400px] overflow-y-auto mb-4">
+              {/* Loop through the recipeResponse.recipes and display in a readable format */}
+              {recipeResponse.recipes && recipeResponse.recipes.length > 0 ? (
+                recipeResponse.recipes.map((meal, index) => (
+                  <div key={index} className="mb-6">
+                    <h3 className="text-xl font-semibold mb-2">{meal.mealType}</h3>
+                    <h4 className="text-lg font-medium mb-2">{meal.mealName}</h4>
+                    <p className="text-sm text-gray-600 mb-2">
+                      <strong>Calories:</strong> {meal.caloriesPerServing} per serving
+                    </p>
+                    <p className="text-sm text-gray-600 mb-2">
+                      <strong>Servings:</strong> {meal.servings}
+                    </p>
+
+                    <div className="mb-2">
+                      <strong>Ingredients:</strong>
+                      <ul className="list-disc pl-5 text-sm text-gray-600">
+                        {meal.ingredients.map((ingredient, idx) => (
+                          <li key={idx}>
+                            {ingredient.amount} {ingredient.unit} of {ingredient.item}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    <div>
+                      <strong>Preparation Steps:</strong>
+                      <ol className="list-decimal pl-5 text-sm text-gray-600">
+                        {meal.preparationSteps.map((step, idx) => (
+                          <li key={idx}>{step}</li>
+                        ))}
+                      </ol>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className="text-gray-600">No recipes found within the given calorie limit.</p>
+              )}
+            </div>
+
+            {/* Close Button */}
+            <button
+              onClick={() => setShowRecipeModal(false)}
+              className="mt-4 w-full bg-red-600 text-white py-2 px-4 rounded hover:bg-red-700"
+            >
+              Close
+            </button>
           </div>
         </div>
       )}
+
     </div>
   );
 }
