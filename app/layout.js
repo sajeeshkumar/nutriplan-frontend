@@ -14,7 +14,7 @@ export default function RootLayout({ children }) {
         </header>
         <main>{children}</main>
         <footer>
-          <p>© 2024 Nutrition Plan Generator App</p>
+          <p>© 2024 KodingKrafters Inc.</p>
         </footer>
       </body>
     </html>
