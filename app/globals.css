@@ -18,21 +18,62 @@ main {
   padding: 2rem;
 }
 
-.dashboard-container {
-  position: relative;
-  padding: 20px;
+/* Form container and labels */
+.form-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.form-group {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.form-label {
+  flex: 1;
+  font-weight: bold;
+}
+
+.form-input {
+  flex: 2;
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  width: 200px; /* adjust width as needed */
+}
+
+.result-container {
+  margin-top: 2rem;
+  padding: 1rem;
+  border-top: 2px solid #ccc;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+button {
+  padding: 0.5rem 1rem;
+  border: none;
+  background-color: #007BFF;
+  color: white;
+  cursor: pointer;
+  font-size: 1rem;
+  border-radius: 4px;
+}
+
+button:hover {
+  background-color: #0056b3;
 }
 
 .logout-link {
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  color: #1e40af; /* Tailwind blue-700 */
-  font-weight: bold;
+  display: block;
+  margin-top: 1rem;
+  color: #007BFF;
   text-decoration: none;
-  font-size: 16px;
 }
 
 .logout-link:hover {
-  color: #0c4a6e; /* Darker shade on hover */
+  text-decoration: underline;
 }
